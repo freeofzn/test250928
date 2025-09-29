@@ -1,0 +1,412 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>오늘의 할 일</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: "Pretendard", "Segoe UI", Arial, sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 16px;
+        background: radial-gradient(circle at top, #4f46e5, #111827 55%);
+        color: #0f172a;
+      }
+
+      main {
+        width: min(520px, 100%);
+      }
+
+      .app {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(12px);
+        border-radius: 20px;
+        padding: 32px 28px;
+        box-shadow: 0 20px 40px rgba(15, 23, 42, 0.3);
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: #1f2937;
+      }
+
+      .subtitle {
+        margin-top: 4px;
+        margin-bottom: 24px;
+        color: #6b7280;
+        font-size: 0.95rem;
+      }
+
+      form {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+
+      input[type="text"] {
+        flex: 1;
+        padding: 14px 16px;
+        border-radius: 12px;
+        border: 1px solid #d1d5db;
+        font-size: 1rem;
+        transition: border-color 0.2s, box-shadow 0.2s;
+      }
+
+      input[type="text"]:focus {
+        outline: none;
+        border-color: #6366f1;
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+      }
+
+      button {
+        cursor: pointer;
+        border: none;
+        background: #4f46e5;
+        color: #fff;
+        font-size: 1rem;
+        padding: 14px 22px;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+      }
+
+      button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 12px 24px rgba(79, 70, 229, 0.3);
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.6;
+        transform: none;
+        box-shadow: none;
+      }
+
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 18px;
+      }
+
+      .summary {
+        margin: 0;
+        color: #1f2937;
+        font-weight: 600;
+      }
+
+      .filters {
+        display: inline-flex;
+        gap: 8px;
+        background: #eef2ff;
+        border-radius: 999px;
+        padding: 4px;
+      }
+
+      .filter-button {
+        background: transparent;
+        color: #4338ca;
+        padding: 8px 16px;
+        border-radius: 999px;
+        font-size: 0.9rem;
+      }
+
+      .filter-button.is-active {
+        background: #4f46e5;
+        color: #fff;
+      }
+
+      .clear-button {
+        background: #f97316;
+      }
+
+      ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        max-height: 320px;
+        overflow-y: auto;
+        padding-right: 4px;
+      }
+
+      li {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 12px;
+        align-items: center;
+        background: #f9fafb;
+        border-radius: 12px;
+        padding: 14px 18px;
+        border: 1px solid #e5e7eb;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+      }
+
+      li:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
+      }
+
+      li.completed {
+        background: #e0e7ff;
+        border-color: #c7d2fe;
+      }
+
+      li.completed .task-text {
+        text-decoration: line-through;
+        color: #6b7280;
+      }
+
+      .checkbox {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+      }
+
+      .task-text {
+        margin: 0;
+        word-break: break-word;
+        line-height: 1.4;
+      }
+
+      .delete-button {
+        background: transparent;
+        color: #ef4444;
+        padding: 6px 8px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+      }
+
+      .delete-button:hover {
+        background: rgba(239, 68, 68, 0.1);
+      }
+
+      .empty-state {
+        text-align: center;
+        color: #6b7280;
+        padding: 28px;
+        border: 1px dashed #d1d5db;
+        border-radius: 16px;
+        background: rgba(249, 250, 251, 0.8);
+      }
+
+      @media (max-width: 520px) {
+        form {
+          flex-direction: column;
+        }
+
+        button[type="submit"] {
+          width: 100%;
+        }
+
+        .controls {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .filters {
+          align-self: flex-end;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="app" aria-label="할 일 목록">
+        <h1>오늘의 할 일</h1>
+        <p class="subtitle">해야 할 일을 추가하고 완료한 후 체크해 보세요.</p>
+
+        <form id="todo-form" autocomplete="off">
+          <input
+            id="todo-input"
+            type="text"
+            name="todo"
+            placeholder="할 일을 입력하세요"
+            required
+            maxlength="80"
+          />
+          <button type="submit">추가</button>
+        </form>
+
+        <div class="controls">
+          <p class="summary">남은 할 일 <span id="todo-count">0</span>개</p>
+          <div class="filters" role="group" aria-label="할 일 필터">
+            <button type="button" class="filter-button is-active" data-filter="all">전체</button>
+            <button type="button" class="filter-button" data-filter="active">진행중</button>
+            <button type="button" class="filter-button" data-filter="completed">완료됨</button>
+          </div>
+          <button type="button" class="clear-button" id="clear-completed">완료 삭제</button>
+        </div>
+
+        <ul id="todo-list" aria-live="polite"></ul>
+        <div id="empty-state" class="empty-state" hidden>할 일이 비어있어요. 첫 번째 할 일을 추가해 보세요!</div>
+      </section>
+    </main>
+
+    <script>
+      const form = document.getElementById('todo-form');
+      const input = document.getElementById('todo-input');
+      const list = document.getElementById('todo-list');
+      const count = document.getElementById('todo-count');
+      const emptyState = document.getElementById('empty-state');
+      const filterButtons = document.querySelectorAll('.filter-button');
+      const clearButton = document.getElementById('clear-completed');
+
+      const STORAGE_KEY = 'codex.todo.items';
+      let todos = loadTodos();
+      let activeFilter = 'all';
+
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const text = input.value.trim();
+        if (!text) {
+          return;
+        }
+
+        todos.push({
+          id: crypto.randomUUID(),
+          text,
+          completed: false,
+          createdAt: Date.now(),
+        });
+
+        input.value = '';
+        persist();
+        render();
+        input.focus();
+      });
+
+      list.addEventListener('click', (event) => {
+        const target = event.target;
+        const { id } = target.closest('li') ?? {};
+        if (!id) {
+          return;
+        }
+
+        if (target.matches('.checkbox')) {
+          toggleTodo(id);
+        }
+
+        if (target.matches('.delete-button')) {
+          deleteTodo(id);
+        }
+      });
+
+      filterButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          activeFilter = button.dataset.filter;
+          filterButtons.forEach((btn) => btn.classList.toggle('is-active', btn === button));
+          render();
+        });
+      });
+
+      clearButton.addEventListener('click', () => {
+        todos = todos.filter((todo) => !todo.completed);
+        persist();
+        render();
+      });
+
+      function toggleTodo(id) {
+        todos = todos.map((todo) =>
+          todo.id === id ? { ...todo, completed: !todo.completed } : todo
+        );
+        persist();
+        render();
+      }
+
+      function deleteTodo(id) {
+        todos = todos.filter((todo) => todo.id !== id);
+        persist();
+        render();
+      }
+
+      function loadTodos() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) {
+            return [];
+          }
+          const parsed = JSON.parse(raw);
+          if (!Array.isArray(parsed)) {
+            return [];
+          }
+          return parsed;
+        } catch (error) {
+          console.error('Failed to load todos', error);
+          return [];
+        }
+      }
+
+      function persist() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
+      }
+
+      function render() {
+        list.innerHTML = '';
+
+        const filteredTodos = todos.filter((todo) => {
+          if (activeFilter === 'active') {
+            return !todo.completed;
+          }
+          if (activeFilter === 'completed') {
+            return todo.completed;
+          }
+          return true;
+        });
+
+        filteredTodos
+          .slice()
+          .sort((a, b) => a.createdAt - b.createdAt)
+          .forEach((todo) => {
+            const item = document.createElement('li');
+            item.id = todo.id;
+            if (todo.completed) {
+              item.classList.add('completed');
+            }
+
+            item.innerHTML = `
+              <input class="checkbox" type="checkbox" ${todo.completed ? 'checked' : ''} aria-label="${todo.text} 완료" />
+              <p class="task-text">${escapeHtml(todo.text)}</p>
+              <button type="button" class="delete-button" aria-label="${todo.text} 삭제">삭제</button>
+            `;
+
+            list.append(item);
+          });
+
+        const remaining = todos.filter((todo) => !todo.completed).length;
+        count.textContent = remaining;
+        emptyState.hidden = todos.length !== 0;
+      }
+
+      function escapeHtml(text) {
+        return text
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      render();
+    </script>
+  </body>
+</html>
+
